@@ -1,0 +1,39 @@
+{
+  "gene": "NKX2-1",
+  "expression_files": 598,
+  "unique_biological_samples": 587,
+  "unique_patients": 517,
+  "groups": {
+    "Solid Tissue Normal": {
+      "files": 59,
+      "biological_samples": 59,
+      "patients": 59,
+      "median_tpm": 128.8478,
+      "median_log2_tpm_plus_1": 7.0206777605413135
+    },
+    "Primary Tumor": {
+      "files": 539,
+      "biological_samples": 528,
+      "patients": 516,
+      "median_tpm": 134.1174,
+      "median_log2_tpm_plus_1": 7.078069662197802
+    }
+  },
+  "matched_patients": 58,
+  "aggregation": "Median TPM across files within sample; median sample TPM within patient/tissue; log2(TPM+1) after aggregation",
+  "paired_wilcoxon": {
+    "statistic": 482.0,
+    "pvalue": 0.0038308196334548837,
+    "median_tumor_minus_normal_log2": -0.3113461075814761,
+    "nonzero_pairs": 58,
+    "method": "two-sided normal approximation, Wilcox zero handling, no continuity correction"
+  },
+  "unmatched_patients": {
+    "tumor": 458,
+    "normal": 1
+  },
+  "unmatched_mannwhitney": {
+    "pvalue": null,
+    "reason": "This pipeline requires at least two unmatched patients in each group; one remaining normal patient is insufficient for a useful secondary group comparison"
+  }
+}

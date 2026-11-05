@@ -1,0 +1,1 @@
+{"project": 1, "method": "bucket", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.04824249999364838, "parse_seconds": 0.46846359997289255, "sort_seconds": 0.26118319999659434, "write_seconds": 0.060377699963282794, "packed_key": true, "pipeline_seconds": 0.838742199994158}

@@ -1,0 +1,15 @@
+test_invalid_intervals_and_comments (__main__.Correctness) ... ok
+test_large_coordinates_fallback_and_empty (__main__.Correctness) ... ok
+test_parallel_output_matches_serial (__main__.Correctness) ... ok
+test_randomized_radix_against_numpy (__main__.Correctness) ... ok
+test_sampling_exact_no_replacement_missing_support_and_seed (__main__.Correctness) ... ok
+test_sampling_uniformity_small_population (__main__.Correctness) ... ok
+test_sort_all_methods_custom_order_ties_and_preservation (__main__.Correctness) ... ok
+test_tcga_exact_gene_named_tpm_column (__main__.Correctness) ... ok
+test_vplot_cli_standard_input (__main__.Correctness) ... ok
+test_vplot_known_centers_orientation_and_boundaries (__main__.Correctness) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 3.470s
+
+OK

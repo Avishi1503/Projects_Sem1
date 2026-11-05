@@ -1,0 +1,1 @@
+{"project": 1, "method": "radix-jit-threaded", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.06752439995761961, "parse_seconds": 0.575218899990432, "sort_seconds": 0.026766300026793033, "write_seconds": 0.05882969999220222, "pipeline_seconds": 0.7286882999469526}

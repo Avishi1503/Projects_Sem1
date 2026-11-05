@@ -1,0 +1,1 @@
+{"project": 1, "method": "lexsort", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.05010469997068867, "parse_seconds": 0.543478999985382, "sort_seconds": 0.040119299956131727, "write_seconds": 0.05436770000960678, "packed_key": true, "pipeline_seconds": 0.6885620999964885}

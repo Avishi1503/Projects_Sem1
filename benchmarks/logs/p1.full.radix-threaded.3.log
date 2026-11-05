@@ -1,0 +1,1 @@
+{"project": 1, "method": "radix-threaded", "input_rows": 13835737, "output_rows": 13452140, "read_seconds": 4.011598100012634, "parse_seconds": 3.483819799963385, "sort_seconds": 8.688555300002918, "write_seconds": 6.429305800003931, "pipeline_seconds": 22.613590099965222}

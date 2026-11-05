@@ -1,0 +1,28 @@
+{
+  "1": {
+    "full_runs": 33,
+    "distinct_output_hashes": 1,
+    "all_equal": true
+  },
+  "3": {
+    "full_runs": 9,
+    "distinct_output_hashes": 1,
+    "all_equal": true
+  },
+  "4": {
+    "full_runs": 9,
+    "distinct_output_hashes": 1,
+    "all_equal": true
+  },
+  "2": {
+    "full_runs": 12,
+    "all_quota_checks_passed": true,
+    "all_distinct_index_checks_passed": true,
+    "selected_counts": [
+      4026230
+    ],
+    "total_variations": [
+      0.02784395061937584
+    ]
+  }
+}

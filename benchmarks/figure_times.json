@@ -1,0 +1,26 @@
+[
+  {
+    "project": 2,
+    "figure_process_seconds": 4.265096499992069,
+    "includes_statistics": false,
+    "repeats": 1,
+    "input": "previously generated output table/matrix",
+    "separate_from_algorithm_ranking": true
+  },
+  {
+    "project": 3,
+    "figure_process_seconds": 3.5828348000068218,
+    "includes_statistics": false,
+    "repeats": 1,
+    "input": "previously generated output table/matrix",
+    "separate_from_algorithm_ranking": true
+  },
+  {
+    "project": 4,
+    "figure_process_seconds": 2.8833520999760367,
+    "includes_statistics": true,
+    "repeats": 1,
+    "input": "previously generated output table/matrix",
+    "separate_from_algorithm_ranking": true
+  }
+]

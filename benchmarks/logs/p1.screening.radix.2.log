@@ -1,0 +1,1 @@
+{"project": 1, "method": "radix", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.06027629994787276, "parse_seconds": 0.57931900001131, "sort_seconds": 0.018763699976261705, "write_seconds": 0.06876930000726134, "packed_key": true, "pipeline_seconds": 0.7285627000383101}

@@ -1,0 +1,94 @@
+[
+  {
+    "mode": "empty_disk_cache",
+    "process_seconds": 10.298993800010066,
+    "kernels": [
+      {
+        "kernel": "BED parser",
+        "first_call_seconds": 2.1741878000320867,
+        "in_process_second_call_seconds": 1.279998105019331e-05
+      },
+      {
+        "kernel": "length parser",
+        "first_call_seconds": 0.8190977000049315,
+        "in_process_second_call_seconds": 8.400005754083395e-06
+      },
+      {
+        "kernel": "tie ordering",
+        "first_call_seconds": 1.3593791999737732,
+        "in_process_second_call_seconds": 2.9799994081258774e-05
+      },
+      {
+        "kernel": "exact sampling",
+        "first_call_seconds": 0.6624866999918595,
+        "in_process_second_call_seconds": 2.9799994081258774e-05
+      },
+      {
+        "kernel": "V-plot",
+        "first_call_seconds": 1.4003398999921046,
+        "in_process_second_call_seconds": 0.002485700009856373
+      },
+      {
+        "kernel": "BED output copy",
+        "first_call_seconds": 0.38135700003476813,
+        "in_process_second_call_seconds": 3.4699973184615374e-05
+      },
+      {
+        "kernel": "Parallel BED copy",
+        "first_call_seconds": 0.7913673999719322,
+        "in_process_second_call_seconds": 4.4599990360438824e-05
+      },
+      {
+        "kernel": "Explicit radix sort",
+        "first_call_seconds": 1.3057830999605358,
+        "in_process_second_call_seconds": 2.640002639964223e-05
+      }
+    ]
+  },
+  {
+    "mode": "populated_disk_cache",
+    "process_seconds": 1.9642719000112265,
+    "kernels": [
+      {
+        "kernel": "BED parser",
+        "first_call_seconds": 0.5442913000006229,
+        "in_process_second_call_seconds": 4.399975296109915e-06
+      },
+      {
+        "kernel": "length parser",
+        "first_call_seconds": 0.03213479998521507,
+        "in_process_second_call_seconds": 4.200031980872154e-06
+      },
+      {
+        "kernel": "tie ordering",
+        "first_call_seconds": 0.032314599957317114,
+        "in_process_second_call_seconds": 1.5400000847876072e-05
+      },
+      {
+        "kernel": "exact sampling",
+        "first_call_seconds": 0.03495300002396107,
+        "in_process_second_call_seconds": 1.6599951777607203e-05
+      },
+      {
+        "kernel": "V-plot",
+        "first_call_seconds": 0.03404300002148375,
+        "in_process_second_call_seconds": 0.001607599959243089
+      },
+      {
+        "kernel": "BED output copy",
+        "first_call_seconds": 0.036662900005467236,
+        "in_process_second_call_seconds": 1.7000013031065464e-05
+      },
+      {
+        "kernel": "Parallel BED copy",
+        "first_call_seconds": 0.06682000000728294,
+        "in_process_second_call_seconds": 1.9300030544400215e-05
+      },
+      {
+        "kernel": "Explicit radix sort",
+        "first_call_seconds": 0.044295999978203326,
+        "in_process_second_call_seconds": 1.580000389367342e-05
+      }
+    ]
+  }
+]

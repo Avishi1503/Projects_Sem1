@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.nbc
+*.nbi
+data/*.gz
+data/*.zip
+data/gdc_*.tsv
+data/gdc_*.txt
+data/screening/
+tmp/
+results/**/*.bed
+results/**/*.npy
+results/**/*.matrix.tsv
+results/**/*.long.tsv
+*.zip

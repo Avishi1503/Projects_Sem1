@@ -1,0 +1,22 @@
+{
+  "python": "3.10.9 | packaged by Anaconda, Inc. | (main, Mar  1 2023, 18:18:15) [MSC v.1916 64 bit (AMD64)]",
+  "executable": "C:\\ProgramData\\anaconda3\\python.exe",
+  "os": "Windows-10-10.0.26200-SP0",
+  "cpu": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+  "physical_cores": 4,
+  "logical_cores": 8,
+  "ram_gib": 15.74100112915039,
+  "versions": {
+    "numpy": "1.23.5",
+    "pandas": "1.5.3",
+    "numba": "0.56.4",
+    "scipy": "1.10.0",
+    "psutil": "5.9.0"
+  },
+  "numba_cache": "pre-populated by correctness/screening runs for main benchmarks",
+  "parallelism": "1 numerical worker normally; threaded sorting variants use up to 2 file readers; radix-parallel uses 4 output-copy workers",
+  "disk_cache": "not cleared or controlled; no cold-disk claim",
+  "timing": "fresh child process, launch through exit, output close included; output hashing and correctness checks by harness after exit excluded",
+  "peak_memory": "child RSS sampled every 50 ms; may miss very short spikes",
+  "host_load": "normal desktop environment; other applications were not closed"
+}

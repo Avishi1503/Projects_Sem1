@@ -1,0 +1,34 @@
+{
+  "sort": {
+    "sha256": "dfca96bd06bbf3acaeb8401714c1c4bbc224c864e50ad52f0db725d6453edce9",
+    "all_full_methods_equal": true,
+    "independent_external_merge_included": true
+  },
+  "rescale": {
+    "query.rescaled": {
+      "output_rows": 4026230,
+      "written_histogram_verified": true,
+      "sha256": "47c33a497e06ad327340f2c14cf54a650a4af27e4f9a73692df387628c1b8b6e"
+    },
+    "query.strict": {
+      "output_rows": 1220621,
+      "written_histogram_verified": true,
+      "sha256": "feb07ec1e85355d061b15d36dce90c3cfad7307580667460b9d6dfc159f82a5a"
+    }
+  },
+  "vplot": {
+    "shape": [
+      1001,
+      1000
+    ],
+    "matrix_sum": 4234419,
+    "wide_equals_binary": true,
+    "all_full_methods_equal": true
+  },
+  "tcga": {
+    "rows": 598,
+    "all_full_methods_equal": true,
+    "unique_file_ids": true,
+    "hint_tpm": 53.1718
+  }
+}

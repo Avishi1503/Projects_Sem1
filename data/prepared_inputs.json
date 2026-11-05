@@ -1,0 +1,37 @@
+[
+  {
+    "path": "shuf.a.bed.gz",
+    "bytes": 102226155,
+    "sha256": "c3b6667b0879890685ab4b9bde991da4d37995d6fae0f585ff8926a346c545af"
+  },
+  {
+    "path": "shuf.b.bed.gz",
+    "bytes": 124622187,
+    "sha256": "cf7ac695ffb421e7e501b39d7aaccc4a26ee9d4015b3fe9961f394c91413a068"
+  },
+  {
+    "path": "query.bed.gz",
+    "bytes": 226848342,
+    "sha256": "b04c36e7db865a1fb8793e106dcfa1f3af1395b8f62a06ddcb6d22c987c55a83"
+  },
+  {
+    "path": "reference.hist",
+    "bytes": 17610,
+    "sha256": "391b583bd70c459ba71b92450571323909629ea5e62efd0109d13689778f855a"
+  },
+  {
+    "path": "selection.tsv",
+    "bytes": 133,
+    "sha256": "ce4bbedb04e6b8d1968171b79997c87f88d6599d78d01ce8daebd468533b56e4"
+  },
+  {
+    "path": "mapped.bed.gz",
+    "bytes": 44568796,
+    "sha256": "fe47c40aeeabc878e10a0f3393b041b29fc94dd940400abef094802e83bd8bd6"
+  },
+  {
+    "path": "tcga_source.zip",
+    "bytes": 647302584,
+    "sha256": "9de32b483853d96808ff88c64b4431c1c9ab8ed56242ead3cc73d46e439d1d9b"
+  }
+]

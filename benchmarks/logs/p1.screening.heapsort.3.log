@@ -1,0 +1,1 @@
+{"project": 1, "method": "heapsort", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.051360599987674505, "parse_seconds": 0.572471899969969, "sort_seconds": 0.037260000011883676, "write_seconds": 0.05487849999917671, "packed_key": true, "pipeline_seconds": 0.7163876999984495}

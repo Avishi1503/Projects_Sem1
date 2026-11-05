@@ -1,0 +1,7 @@
+# Tested with Python 3.10.9. Use the existing Anaconda environment on this PC.
+numpy==1.23.5
+pandas==1.5.3
+numba==0.56.4
+scipy==1.10.0
+matplotlib==3.7.0
+psutil==5.9.0

@@ -1,0 +1,1 @@
+{"project": 1, "method": "quicksort", "input_rows": 13835737, "output_rows": 13452140, "read_seconds": 4.873874799988698, "parse_seconds": 3.4355259999865666, "sort_seconds": 3.155999200011138, "write_seconds": 6.021743200020865, "pipeline_seconds": 17.48766829998931}

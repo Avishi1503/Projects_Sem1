@@ -1,0 +1,1 @@
+{"project": 1, "method": "timsort", "input_rows": 200000, "output_rows": 193589, "read_seconds": 0.04689850000431761, "parse_seconds": 0.5039070000057109, "sort_seconds": 0.3710747999721207, "write_seconds": 0.05583869997644797, "packed_key": true, "pipeline_seconds": 0.9781947999726981}
