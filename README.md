@@ -1,4 +1,4 @@
-# Semester 1: Bioinformatics projects
+# Semester 1: BEC513 Project
 
 Four Python programs for sorting BED files, matching fragment-length distributions, making a V-plot, and extracting NKX2-1 expression from TCGA-LUAD data.
 
