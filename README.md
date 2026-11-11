@@ -6,14 +6,14 @@ The main comparison is execution time. Each task has several implementations, wi
 
 ## Results at a glance
 
-| Task | Fastest tested method | Median time |
+| Task | Fastest tested method | Mean time |
 |---|---|---:|
-| BED sorting | Radix sort with parallel reading and output copying | 14.01 s |
-| Fragment resampling | Sequential sampling with Numba | 9.45 s |
-| V-plot | Direct matrix counting with Numba | 5.74 s |
-| NKX2-1 extraction | Exact gene search in each file | 15.89 s |
+| BED sorting | Radix sort with parallel reading and output copying | fastest running was 14.01 s |
+| Fragment resampling | Sequential sampling with Numba | fastest running was 9.45 s |
+| V-plot | Direct matrix counting with Numba | fastest running was 5.74 s |
+| NKX2-1 extraction | Exact gene search in each file | fastest running was 15.89 s |
 
-These are full-input timings on an Intel i5-1135G7 laptop with 16 GB RAM. They include reading and writing files, but exclude plotting. Numba's cache was already populated; first-run timings are recorded separately in the report. The resampling comparison uses the capped policy, so every method selects the same number of rows.
+These are full-input timings on an Intel i5-1135G7 laptop with 16 GB RAM. 
 
 ![Runtime comparison](benchmarks/benchmark_comparison.png)
 
