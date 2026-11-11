@@ -1,7 +1,7 @@
 # Semester 1 projects
 
 - [BEC 513](BEC%20513/README.md): Python projects, results, and algorithm comparisons.
-- [BEC 511](BEC%20511/): Reserved for future work.
+- [BEC 511](BEC%20511/): For Mathematics Project. 
 
 To run the BEC 513 projects, open PowerShell in this repository and enter:
 
