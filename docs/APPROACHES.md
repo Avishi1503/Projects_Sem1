@@ -1,89 +1,116 @@
-# How the four projects work
+# Algorithm notes
 
-All implementations are Python. NumPy, pandas and Numba are allowed dependencies in this package; no handwritten C/C++ program or executable compiler is required. If the instructor restricts packages, confirm that separately: "Python only" does not tell us whether JIT compilation is permitted. The ordinary Python and pandas alternatives remain available.
+The four tasks spend time on different things. Sorting needs an ordering algorithm; resampling needs a way to choose rows; a V-plot needs counts; gene extraction needs to find one value in each file. Using sorting everywhere would add work to the last three tasks.
 
-## 1. Quick BED sort
+All implementations are Python, with NumPy, pandas and Numba where useful. The fastest methods for the first three tasks use Numba compilation. If packages or JIT compilation are restricted for assessment, that changes which methods can be used. Even the ordinary sorting and resampling variants share some Numba parsing and writing routines.
 
-Imagine labelled trays: one tray for each chromosome, arranged exactly as the selection file says. First discard rows whose chromosomes have no tray. Then sort retained rows by **selection rank, numerical start, numerical end**. Equal keys keep their original input order. The statement explicitly specifies chromosome order; sorting coordinates within each chromosome is an additional conventional BED ordering choice, documented here.
+## 1. BED sorting
 
-Extra BED fields are payload, not sorting keys. One supplied run puts a length in column 4; the other puts a read identifier there. Both formats survive unchanged. Duplicate records are retained, because merging runs is not deduplication.
+Read both BED files, discard chromosomes absent from `selection.tsv`, and sort the remaining rows by:
 
-Eleven alternatives are provided. In-memory sorting comparisons share a compiled parser and serial output writer; `external` uses an independent Python parser and merge path. The explicitly labelled `radix-parallel` additionally tests a parallel output writer.
+1. Chromosome position in the selection file.
+2. Start coordinate.
+3. End coordinate.
 
-| Method | Idea | Time after parsing | Main tradeoff |
-|---|---|---|---|
-| `timsort` | Python sorts a list of row indices using tuple keys | O(N log N) worst case | Easiest explanation; Python objects use substantial memory |
-| `bucket` | Partition by chromosome, then Python-sort each bucket | O(N + sum n_c log n_c) | Fewer comparisons; still Python objects |
-| `quicksort` | Pack the keys into uint64, use NumPy comparison sort, restore ties | O(N log N) with installed NumPy introsort | Fast general-purpose comparison sort |
-| `heapsort` | Same packed keys, NumPy heap sort, restore ties | O(N log N) | Predictable complexity, poorer locality |
-| `lexsort` | Stable multi-key numerical sorting | Implementation dependent; integer keys use specialized sorts | Avoids bit packing; handles wide coordinates |
-| `radix` | Pack chromosome/start/end into uint64 and use stable integer radix sort | O(wN), fixed-width w | Fast, compact indices; needs temporary arrays |
-| `radix-threaded` | Same radix sort, decompress two run files concurrently | Same sorting complexity | Can reduce reading time; extra transient memory and two reader threads |
-| `radix-jit` | Explicit stable 8-bit LSD radix passes, written in Python with Numba | O(8N + 8*256) | Moves keys alongside indices for sequential reads; larger temporary arrays |
-| `radix-jit-threaded` | Explicit radix passes plus two concurrent file readers | Same sorting complexity | Combines the two optimizations; measured rather than assumed faster |
-| `radix-parallel` | Explicit radix, two readers and up to four output-copy workers | Same sorting complexity | Tests whether parallel copying helps the remaining output bottleneck |
-| `external` | Sort bounded chunks on disk and heap-merge their streams | O(N log M + N log K) | Low RAM; extra disk writes and Python merge work |
+Rows with equal keys keep their original order. Extra fields and duplicate rows are kept. Chromosome order is specified by the assignment; sorting by coordinates within a chromosome is the convention used here.
 
-Here M is the chunk size and K the number of chunks. The external version opens K streams; for thousands of chunks a production system should use a multi-stage merge. The supplied data require far fewer.
+### Methods compared
 
-Packing example: allocate enough bits for every observed start and end, and put chromosome rank in the most significant bits. Comparing one resulting integer is equivalent to comparing the three keys. **Never silently truncate:** if all keys do not fit into 64 bits, this code falls back to `lexsort`. It does not allocate one cell per genomic coordinate; a direct counting sort over billions of positions would waste memory. The explicit radix implementation instead uses just 256 counting buckets per pass. It sorts by the least significant byte first and maintains stability at every pass, so more significant bytes establish the final lexicographic order without breaking earlier ordering.
+| Method | How it works | Main cost or limitation |
+|---|---|---|
+| `timsort` | Python `sorted()` with tuple keys | O(N log N) worst case; many Python objects |
+| `bucket` | Group by chromosome, then sort each group | O(N + sum n_c log n_c); still uses Python objects |
+| `quicksort` | NumPy sorts packed integer keys, then equal-key ties are restored | Comparison sorting plus a tie pass |
+| `heapsort` | Same keys, using NumPy heapsort | O(N log N); slower in these measurements |
+| `lexsort` | Sort the three numerical columns directly | Avoids packing; also used if keys exceed 64 bits |
+| `radix` | NumPy's stable sort on unsigned integer keys | Fixed-width integer sorting |
+| `radix-threaded` | Same sort, with two file-reading threads | Tests whether concurrent decompression helps |
+| `radix-jit` | Explicit least-significant-byte radix passes with Numba | Temporary key and index arrays |
+| `radix-jit-threaded` | Explicit radix sort plus two readers | Extra memory during reading |
+| `radix-parallel` | Explicit radix sort, two readers and four output-copy workers | Fastest here, but needs about 1.7 GiB RAM |
+| `external` | Sort chunks on disk, then merge them with a heap | Lower RAM use, more disk I/O |
 
-The built-in quicksort/heapsort names refer to NumPy **1.23.5**, the tested version. Newer NumPy releases may map named options differently. Integer `stable` and `mergesort` are aliases of a specialized radix implementation here, so presenting them as two independent algorithms would be misleading. See the [NumPy sorting documentation](https://numpy.org/doc/stable/reference/generated/numpy.sort.html) and [Python sorting guide](https://docs.python.org/3.13/howto/sorting.html).
+Most in-memory methods share parsing and writing code. `radix-parallel` changes the output writer too; `external` has its own Python parsing and merging path. These timings therefore compare complete implementations, not just sort functions.
 
-Output: `results/sorted_bed_file_per_sample/X.provided.sorted.bed`. Both the sample and selection name appear in the filename. Run `--sample` and `--selection-name` to change them.
+### Why radix sort helps
 
-## 2. Rescale a fragment-length distribution
+The chromosome rank, start and end are packed into one unsigned 64-bit integer. The chromosome rank occupies the highest bits, followed by start and end. Sorting these integers gives the same order as comparing the three fields. If the values need more than 64 bits, the program falls back to `lexsort`.
 
-Use `end - start` for fragment length. Build a histogram `q[L]` of query rows and normalize the reference weights to `p[L]`. Decide how many rows to retain for each length **before** sampling. Sample original row positions without replacement, then write their complete lines in original order.
+The explicit radix version handles one byte at a time, starting with the lowest byte. Each pass counts 256 possible values and moves rows into the corresponding positions. Each pass is stable, so sorting the next byte preserves the order established by earlier bytes. With eight bytes, its cost is O(8N + 8*256).
 
-If two distinct input records have identical text, both can legitimately appear in the result. "Without replacement" applies to original row positions; it does not silently deduplicate biological reads.
+Keys move alongside their row indices, making the next scan sequential. The parallel writer computes each row's destination before copying, so workers write to separate slices of the output buffer. Only the copy step is parallel; the file is written in order.
 
-Two explicit policies are included because "matches the reference" and "retains a large dataset" can conflict:
+For low-memory machines, `external --chunk-rows 250000` is an alternative. With chunk size M and K chunks, sorting and merging cost O(N log M + N log K). The implementation opens K streams; very large K would need a multi-stage merge.
 
-* `capped` (default): request a scale of 30% of input row count, then set `quota[L] = min(q[L], floor(scale * p[L]))`. This yields the intended shape where enough rows exist. Scarce bins are capped and the output can contain fewer than 30% of rows. The 30% is a chosen, configurable setting, not a requirement in the PDF.
-* `strict`: on lengths present in both inputs, choose `scale = min(q[L] / p[L])`, then use the same floor quotas. This is the largest continuous proportional scale on shared support, before integer rounding. One scarce length can make the retained sample small. Missing reference bins remain impossible; their mass is explicitly reported. It is not a claim of an exact real-valued probability match after rounding.
+NumPy's sort behavior depends on the version and data type. In the tested NumPy 1.23.5 environment, stable integer sorting uses radix sort. `stable` and `mergesort` are therefore not counted as separate algorithms here.
 
-No sampling algorithm can create a fragment length absent from the query without fabricating data. Report missing reference mass, retained count, and total variation distance `0.5 * sum(abs(observed_probability-reference_probability))`. A small distance means a closer distribution. Do not choose a "fastest" algorithm just because it quietly writes fewer rows: every method in a policy comparison receives identical quotas.
+## 2. Fragment resampling
 
-For this assignment's goal of matching the reference as closely as possible, prefer the **strict output**. The capped output is also provided to show the retention/accuracy tradeoff and uses larger identical quotas for the runtime comparison. The runner creates both, and the report gives their actual counts and distances.
+Fragment length is `end - start`. Let `q[L]` be the number of query rows of length L and `p[L]` the normalized reference probability. Calculate a quota for each length, then sample that many original row positions without replacement.
 
-Four sampling approaches:
+The two quota policies are:
 
-1. **Sequential exact sampling (Python):** keep the next row with probability `still_needed / still_remaining` within its length bin. Decrement the remaining count each time. This gives an unbiased subset of the requested size.
-2. **Sequential exact sampling (Numba):** the same mathematical rule executed as a compiled Python loop. O(N + L), with a compact output index array.
-3. **Random priorities:** give each row a random number, group by length and sort by priority, then retain the first quota rows. Uniform subsets, but adds an O(N log N) sorting step and temporary arrays.
-4. **Stratified reservoir sampling:** maintain a reservoir of size quota for each length. A later row replaces an existing entry with the appropriate probability. Selection is O(N), but per-row Python RNG calls cost time.
+- **Capped:** use `scale = fraction * total_rows`, then `quota[L] = min(q[L], floor(scale * p[L]))`. The default fraction is 0.30, a configurable choice rather than an assignment requirement. Scarce lengths are capped, so the result may contain fewer than 30% of the rows.
+- **Strict:** on lengths present in both inputs, use `scale = min(q[L] / p[L])`, then the same floor quotas. This gives the largest proportional scale on the shared lengths before integer rounding. A scarce length can limit the whole sample.
 
-The current implementation first reads and indexes the input for every alternative, so it can validate quotas and preserve rows consistently. The reservoir selector itself only needs O(sum quotas) storage; the delivered pipeline is **not** claimed to be a fully streaming reservoir pipeline. Different generators can select different records with the same seed; all meet identical per-length quotas. Repeating the same method and seed is deterministic in the tested environment.
+Use the **strict output** for the closest reference match. It retains 1,220,621 rows with total variation distance about 0.000189. The capped output retains 4,026,230 rows with distance about 0.027844. The distance is `0.5 * sum(abs(sample_probability - reference_probability))`; smaller is closer.
+
+A length missing from the query cannot be sampled. Its reference probability is reported as missing mass. Integer rounding also prevents a perfectly exact probability match in general.
+
+### Selecting the rows
+
+The Python and Numba sequential methods use the same rule: keep the next row with probability `still_needed / still_remaining` for its length. This gives a uniform subset of the required size. Numba runs that loop with less Python overhead, giving O(N + L) selection work.
+
+The other methods are random priorities (assign a random value, sort within each length, take the first quota rows) and reservoir sampling (maintain a fixed-size sample for each length). Priorities add a sorting step; the reservoir version makes many Python-level random calls.
+
+All methods receive identical quotas. Different random generators may choose different rows, even with the same seed, but the length counts must agree. The output follows input order. Two identical input lines can both be selected because they are distinct original records.
+
+All four implementations read and index the input first. Although reservoir selection can use bounded memory, this particular program is not a fully streaming reservoir implementation.
 
 ## 3. V-plot
 
-The provided file has 13 columns: a leading field, a six-column region, and a six-column fragment. One row is an already computed region/fragment overlap. A fragment overlapping two regions contributes once to each region. Do not deduplicate these pairs.
+Each row in `mapped.bed.gz` is an existing region/fragment overlap. A fragment overlapping two regions contributes once to each region.
 
-Coordinates used (one-based column numbers):
+Using one-based column numbers:
 
-* Region: chromosome 2, start 3, end 4, strand 7.
-* Fragment: chromosome 8, start 9, end 10.
-* Fragment length: column 10 minus column 9. The redundant length field is not needed.
+| Field | Columns |
+|---|---|
+| Region chromosome, start, end, strand | 2, 3, 4, 7 |
+| Fragment chromosome, start, end | 8, 9, 10 |
 
-Compute the difference between fragment and region midpoints. Mirror it when the **region** strand is negative. To avoid floating-point arithmetic, calculate `doubled_offset = fragment_start + fragment_end - region_start - region_end`, change its sign if needed, then take floor division by 2. Thus a half-base offset of +0.5 falls in bin 0 and -0.5 in bin -1. `--genomic` disables strand mirroring.
+Calculate fragment length and the difference between the fragment and region midpoints. To avoid floating-point arithmetic:
 
-The statement does not fully specify midpoint rounding, strand orientation, or the exact last offset column. These are explicit conventions, not facts inferred from a filename. Defaults are offsets **-500 through +499 inclusive** (1,000 bins) and lengths 0 through 1,000. They are configurable. Rows outside the selected window, overly long fragments, and mismatched chromosomes are counted and reported as excluded. The first matrix column contains fragment length; subsequent columns are the offset bins. The long form contains `offset, length, count` and is directly suitable for Gnuplot.
+```text
+doubled_offset = fragment_start + fragment_end - region_start - region_end
+if region_strand is negative: doubled_offset = -doubled_offset
+offset = doubled_offset // 2
+```
 
-Compare a Python `Counter`, pandas chunks plus `numpy.bincount`, and a Numba byte parser that increments a dense matrix. All are O(N) in row count for fixed matrix size. The differences are parsing overhead and Python object creation. The compiled implementation reads bounded chunks from standard input and does not need the whole file in memory.
+Floor division puts +0.5 in bin 0 and -0.5 in bin -1. `--genomic` disables strand mirroring. These conventions are documented because the assignment does not fully specify rounding, orientation or the last offset column.
 
-## 4. NKX2-1 in TCGA-LUAD
+The default matrix has lengths 0 through 1,000 and offsets -500 through +499. Rows outside the window, over the length limit, or on mismatched chromosomes are counted as excluded. The wide TSV starts with a length column; the long TSV contains `offset, length, count` for Gnuplot.
 
-Match every expression file to the sample sheet using **File ID**, check the filename, and include exactly `TCGA-LUAD` / `Primary Tumor` or `Solid Tissue Normal`. Ignore mutation files, other data types and other sample categories. The original ZIP and inner tar.gz are streamed; no multi-gigabyte expression folder must be extracted.
+Three methods were compared: a Python `Counter`, pandas chunks with `numpy.bincount`, and a Numba byte parser that increments the matrix directly. Each is O(N) for fixed matrix size. The Numba method avoids creating Python objects for every field and reads bounded chunks, so it uses little memory. No sorting is needed.
 
-Use the column named `tpm_unstranded`, and match `NKX2-1` exactly in the column named `gene_name`. Transform each TPM as `log2(TPM + 1)`, not `log2(TPM) + 1`. Reject missing/ambiguous gene rows and negative/nonfinite TPM. Check file sizes and MD5 against the supplied manifest. The problem's normal-sample example must produce TPM **53.1718**.
+## 4. NKX2-1 expression
 
-Three parsers are benchmarked with the same archive reading and integrity checks: full pandas table parsing, line-by-line field splitting, and exact byte-token search followed by parsing only candidate rows. Byte search reduces work because only one gene is needed. Archive decompression still has to traverse every file. A cached results table is useful for plotting again, but is **not** counted as a fresh-data benchmark win.
+The program streams the ZIP and its inner tar.gz archive. Each expression file is matched to the sample sheet by File ID and filename. Only TCGA-LUAD primary tumor and solid tissue normal samples are included. File sizes and MD5 hashes are checked against the manifest.
 
-The expression table retains all eligible files. Plots explicitly identify their unit (files or biological samples). For inference, repeated files from the same patient/tissue are aggregated and matched tumor/normal patients are tested with paired Wilcoxon. Unmatched patients can be compared separately with Mann-Whitney. These tests address expression differences, not diagnostic sensitivity, specificity or clinical utility. See the [SciPy Wilcoxon documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html) and [Mann-Whitney documentation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.mannwhitneyu.html).
+The target is an exact `NKX2-1` match in `gene_name`, with expression read from the named `tpm_unstranded` column. The plotted value is `log2(TPM + 1)`. Missing or duplicate gene matches and invalid TPM values are rejected. The example file in the assignment gives TPM 53.1718.
 
-## How to explain the optimization in a viva
+The three approaches parse a pandas table, split each line, or search for the exact gene token in the file's bytes. Byte search was fastest because only one gene is needed. It still decompresses the archive and checks candidate rows against the correct column.
 
-"I established one output definition, wrote edge-case checks, and compared several Python implementations. I measured complete fresh-process runs, including decompression, parsing and writing. I repeated each full-data comparison, reported the median and range, and checked output equivalence. My choices reduce Python work and unnecessary sorting. I report JIT startup separately and do not claim my laptop's winner is universally fastest."
+The output has 598 expression files: 539 tumor and 59 normal. The all-file boxplot is descriptive. For statistical testing, repeated observations are aggregated by biological sample and then patient/tissue; the 58 matched patients are compared with a paired Wilcoxon test. The resulting p-value is about 0.00383. Only one normal patient remains unmatched, so a separate unmatched-group test is not reported.
 
-Know these distinctions: algorithm versus implementation; asymptotic complexity versus measured runtime; execution time versus first-use compilation; same random quotas versus identical sampled rows; full data versus screening subsets; descriptive group differences versus paired statistical inference.
+The matched patients show a negative median tumor-minus-normal change, even though the two pooled medians are close. These are different comparisons. An expression difference by itself does not establish diagnostic accuracy.
+
+## Points to understand before presenting
+
+- Big-O describes growth with input size; parsing, allocation and disk I/O also affect measured time.
+- First-use Numba compilation is separate from later runs using its cache.
+- Equal sampling quotas do not mean identical randomly chosen rows.
+- The sorting variants use different amounts of memory and different numbers of workers.
+- The timings include file reading and writing. Plotting is measured separately.
+- The reported winner is the fastest tested on this machine, not a guarantee for every input or computer.
+
+See the [full results](../REPORT.md) for timing ranges and the [README](../README.md#references) for library references.

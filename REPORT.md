@@ -1,8 +1,8 @@
-# Measured results
+# Benchmark results
 
-Python implementations tested on the complete supplied inputs. These are measured results on this computer, not a claim of universal optimality.
+The tables below compare the Python implementations on the supplied datasets. Times vary by machine; these are the measurements from the test laptop.
 
-## Recommended methods
+## Fastest methods in these runs
 
 | Project | Fastest tested method | Median execution | Observed range | Peak RSS |
 |---|---|---:|---:|---:|
@@ -11,15 +11,15 @@ Python implementations tested on the complete supplied inputs. These are measure
 | 3. V-plot matrix | `compiled` | 5.74 s | 5.11-6.10 s | 115 MiB |
 | 4. TCGA gene extraction | `bytes` | 15.89 s | 15.80-16.14 s | 69 MiB |
 
-## Fairness and scope
+## How the timings were measured
 
-Every timed run starts a fresh Python process and includes imports, cached JIT loading where used, decompression, parsing, computation and writing/closing its output. Each comparison uses the same data and output definition. Main results use at least three repeats in a deterministic shuffled order within each comparison batch. Later optimization batches add methods; the final sorting check retests the leading alternatives together. Timings include OS-buffered writes, not a forced physical-disk sync. Source hashing and harness output hashing are outside the timing. Individual pipelines include their own validation and summary-file work.
+Each run starts a new Python process. The timer includes imports, loading the Numba cache, reading, decompression, calculation and writing the output. Each method uses the same input and output requirements. Runs are repeated at least three times, in a shuffled order with a fixed seed within each batch. The final sorting batch compares the leading methods together. Writes are buffered by the operating system; no forced disk sync is used. Output hashing by the benchmark script happens after timing, while checks inside each program remain included.
 
-The timed outputs are sorted BED, sampled BED plus histogram, V-plot matrix, and TCGA expression table respectively. Figure rendering and patient-level statistics are separate common downstream steps, not included in the algorithm-ranking times. Thus the Project 4 extraction number is not the runtime of extraction plus its required boxplot. Downstream rendering times are recorded separately in `benchmarks/figure_times.json`.
+The timed outputs are the sorted BED, sampled BED and histogram, V-plot matrix, and TCGA expression table. Plotting and patient-level statistics are measured separately in `benchmarks/figure_times.json`. In particular, the TCGA time in the table does not include making the boxplot.
 
-Disk caches were not cleared. Other desktop applications remained open. Ranges reveal some environmental variation. These measurements do not include downloading or installing packages. Threaded sorting variants use two concurrent decompression readers. The explicitly labelled radix-parallel variant also uses four output-copy workers; other methods use one computational worker.
+Disk caches were not cleared and other desktop applications were open. Downloading and installing packages are excluded. Threaded sorting variants use two readers; radix-parallel also uses four output-copy workers. Other variants use one computational worker.
 
-Screening sorting uses 100,000 rows from each run. Resampling screening uses the first 200,000 query rows; V-plot screening uses the first 200,000 mapped rows; TCGA screening uses 12 eligible expression files. Screening is not a full-data benchmark. Python Timsort and bucket variants are screened but intentionally not expanded to the entire input because their Python objects require substantially more RAM.
+Screening uses smaller inputs: 100,000 rows from each sorting file, 200,000 rows for resampling and V-plot, and 12 eligible TCGA files. Timsort and chromosome buckets were only run at this size because of their Python-object memory use. Full-input results are labelled separately.
 
 ## 1. BED sorting
 
@@ -93,7 +93,7 @@ Eligible expression files: **598**. Manifest MD5 checks: **598**. Groups: `{'Pri
 
 ## First-use compilation cost
 
-Main benchmark runs use populated Numba caches. The separate small-input experiment below distinguishes first compilation from loading a cache. First-call values include dispatch and tiny example computation; they are not compiler-only timers.
+The main timings use an existing Numba cache. This smaller experiment compares the first call with an empty cache, the first call with a saved cache, and a second call in the same process. The first-call times include a small example calculation as well as compilation or loading.
 
 | Kernel | Empty-cache first call | Populated-cache first call | In-process repeat |
 |---|---:|---:|---:|
@@ -106,11 +106,11 @@ Main benchmark runs use populated Numba caches. The separate small-input experim
 | Parallel BED copy | 0.7914 s | 0.0668 s | 0.000019 s |
 | Explicit radix sort | 1.3058 s | 0.0443 s | 0.000016 s |
 
-Run `python benchmarks/jit_cost.py` to reproduce this distinction. A judge that runs once without a cache will pay first-use compilation. Standard NumPy/pandas operations use libraries already compiled when installed; no local C++ compile is performed.
+Run `python benchmarks/jit_cost.py` to repeat this check. A first run on another computer includes compilation. NumPy and pandas use libraries compiled when installed.
 
 ## Complete first-use runs
 
-The following are additional complete-data runs with an empty dedicated Numba cache. They include compilation, imports, input reading, computation and output writing. Each is one observation, not a median; the operating-system file cache is still uncontrolled. These runs are not mixed into the main repeated cached-execution ranking.
+These full-input runs use a separate, empty Numba cache and include compilation. Each time is a single observation, not a median. The operating-system file cache was still uncontrolled. These runs are kept separate from the repeated timings above.
 
 | Project | Selected method | Empty-cache complete run |
 |---|---|---:|
@@ -122,24 +122,25 @@ TCGA byte extraction uses no Numba kernel; its main fresh-process timings alread
 
 ## Recommended resampling output
 
-For the closest reference match, use `results/rescale/query.strict.bed`: **1,220,621 rows**, total variation **0.00018906**. The capped comparison output retains more rows but has greater shape error. These policies are different scientific choices; their runtimes must not be ranked as if they produced the same output.
+For the closest reference match, use `results/rescale/query.strict.bed`: **1,220,621 rows**, total variation **0.00018906**. The capped comparison output retains more rows but has greater shape error. The two policies produce different amounts of data, so their runtimes are not directly comparable.
 
 ## Expression interpretation
 
 The files contain 598 eligible expression records, 587 biological samples and 517 patients. The descriptive boxplot shows each expression file. Patient-level testing uses 58 matched tumor/normal pairs after aggregating repeated observations.
 Paired Wilcoxon p-value: **0.00383082**. Median paired change in log2(TPM + 1): **-0.3113**.
 
-An expression difference alone does not establish biomarker accuracy. The paired analysis and the all-file descriptive boxplot answer related but different questions.
+The paired test compares tumor and normal tissue within patients. The all-file boxplot shows the overall spread. Neither result alone establishes diagnostic accuracy.
 
-The normal and tumor medians across all expression files are close, while tumor values have a much wider spread. The matched subset has a negative median paired change; it must not be confused with the difference between the two pooled medians. Only one normal patient remains unmatched, so no secondary unmatched-group inference is reported. The illustrative plot in the supplied PDF is not used as an expected p-value.
+Across all files, the tumor and normal medians are close, but tumor values vary more. Among matched patients, the median tumor-minus-normal change is negative. Only one normal patient is unmatched, so a separate unmatched-group test is not reported. The example plot in the assignment is illustrative; its p-value is not a target for this analysis.
 
-## Read next
+## Supporting files
 
-* [Approach explanations and viva notes](docs/APPROACHES.md)
-* [Commands and folder guide](README.md)
+* [Algorithm notes](docs/APPROACHES.md)
+* [Setup and run commands](README.md)
 * Raw observations: `benchmarks/raw_results.jsonl`
 * Full command logs: `benchmarks/logs/`
 * Per-stage timings: `benchmarks/summary.csv`
 * Input provenance and SHA-256: `data/sources.json`
+* Source hashes from the original timing runs: `benchmarks/source_hashes.json` (before the formatting and comment edits)
 
 Tested environment: Python 3.10.9, NumPy 1.23.5, pandas 1.5.3, Numba 0.56.4, SciPy 1.10.0; Intel Core i5-1135G7, 4 physical cores / 8 logical cores, 15.7 GiB RAM.
